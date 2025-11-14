@@ -29,15 +29,16 @@ class DagRegMin:
         self.x_prime = {} # unscaled probabilities
 
     def next_strategy(self):
+        reach = {}
         for node in self.dag.nodes:
-            self.x[node], self.x_prime[node] = {}, {}
+            reach[node], self.x_prime[node] = {}, {}
             for action in self.dag.child_of[node]:
-                self.x[node] = 1
+                reach[node] = 1
                 self.x_prime[node][action] = 1
         
         for node in self.dag.active_nodes:
             if node != self.dag.root:
-                self.x[node] = sum(self.x[parent] for parent in self.dag.parent_of[node])
+                reach[node] = sum(reach[parent] for parent in self.dag.parent_of[node])
 
             S = sum(max(self.regret[node][action], 0) for action in self.dag.child_of[node])
 
@@ -48,7 +49,7 @@ class DagRegMin:
                 else:
                     self.x_prime[node][action] = max(self.regret[node][action] - S, 0) / S
 
-                self.x[(node, action)] = self.x_prime[node][action] * self.x[node]
+                self.x[(node, action)] = self.x_prime[node][action] * reach[node]
                 
 
         return self.x
